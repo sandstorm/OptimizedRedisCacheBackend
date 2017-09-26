@@ -1,0 +1,18 @@
+{
+    "description": "",
+    "type": "neos-package",
+    "name": "sandstorm/optimizedrediscachebackend",
+    "require": {
+        "neos/flow": "*"
+    },
+    "autoload": {
+        "psr-4": {
+            "Sandstorm\\OptimizedRedisCacheBackend\\": "Classes/"
+        }
+    },
+    "extra": {
+        "neos": {
+            "package-key": "Sandstorm.OptimizedRedisCacheBackend"
+        }
+    }
+}
