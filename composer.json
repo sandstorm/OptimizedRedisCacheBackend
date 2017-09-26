@@ -2,6 +2,7 @@
     "description": "",
     "type": "neos-package",
     "name": "sandstorm/optimizedrediscachebackend",
+    "license": "MIT",
     "require": {
         "neos/flow": "*"
     },
