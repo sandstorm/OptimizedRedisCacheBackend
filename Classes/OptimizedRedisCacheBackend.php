@@ -12,8 +12,6 @@ namespace Sandstorm\OptimizedRedisCacheBackend;
  */
 
 use Neos\Cache\Backend\AbstractBackend as IndependentAbstractBackend;
-use Neos\Cache\Backend\IterableBackendInterface;
-use Neos\Cache\Backend\PhpCapableBackendInterface;
 use Neos\Cache\Backend\RequireOnceFromValueTrait;
 use Neos\Cache\Backend\TaggableBackendInterface;
 use Neos\Cache\EnvironmentConfiguration;
@@ -96,16 +94,23 @@ class OptimizedRedisCacheBackend extends IndependentAbstractBackend implements T
             $setOptions['ex'] = $lifetime;
         }
 
+        $redisTags = array_reduce($tags, function($redisTags, $tag) use ($lifetime, $entryIdentifier) {
+            $expire = $this->calculateExpires($this->buildKey('tag:' . $tag), $lifetime);
+            $redisTags[] = ['key' => $this->buildKey('tag:' . $tag), 'value' => $entryIdentifier, 'expire' => $expire];
+
+            $expire = $this->calculateExpires($this->buildKey('tags:' . $entryIdentifier), $lifetime);
+            $redisTags[] = ['key' => $this->buildKey('tags:' . $entryIdentifier), 'value' => $tag, 'expire' => $expire];
+            return $redisTags;
+        }, []);
+
         $this->redis->multi();
         $result = $this->redis->set($this->buildKey('entry:' . $entryIdentifier), $this->compress($data), $setOptions);
         if (!$result instanceof \Redis) {
             $this->verifyRedisVersionIsSupported();
         }
-        foreach ($tags as $tag) {
-            $this->redis->sAdd($this->buildKey('tag:' . $tag), $entryIdentifier);
-            $this->redis->expire($this->buildKey('tag:' . $tag), $lifetime);
-            $this->redis->sAdd($this->buildKey('tags:' . $entryIdentifier), $tag);
-            $this->redis->expire($this->buildKey('tags:' . $entryIdentifier), $lifetime);
+        foreach ($redisTags as $tag) {
+            $this->redis->sAdd($tag['key'], $tag['value']);
+            $this->redis->expire($tag['key'], $tag['expire']);
         }
         $this->redis->exec();
     }
@@ -203,6 +208,23 @@ class OptimizedRedisCacheBackend extends IndependentAbstractBackend implements T
     private function buildKey($identifier)
     {
         return $this->cacheIdentifier . ':' . $identifier;
+    }
+
+    /**
+     * Calculate the max lifetime for a tag
+     *
+     * @param string $tag
+     * @param int $lifetime
+     * @return int
+     */
+    private function calculateExpires($tag, $lifetime)
+    {
+        $ttl = $this->redis->ttl($tag);
+        if ($ttl === -1 || $lifetime === self::UNLIMITED_LIFETIME) {
+            return 0;
+        } else {
+            return max($ttl, $lifetime);
+        }
     }
 
     /**
