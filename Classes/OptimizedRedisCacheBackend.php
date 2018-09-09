@@ -14,6 +14,8 @@ namespace Sandstorm\OptimizedRedisCacheBackend;
 use Neos\Cache\Backend\AbstractBackend as IndependentAbstractBackend;
 use Neos\Cache\Backend\RequireOnceFromValueTrait;
 use Neos\Cache\Backend\TaggableBackendInterface;
+use Neos\Cache\Backend\IterableBackendInterface;
+use Neos\Cache\Backend\PhpCapableBackendInterface;
 use Neos\Cache\EnvironmentConfiguration;
 use Neos\Cache\Exception as CacheException;
 
