@@ -65,6 +65,7 @@ class OptimizedRedisCacheBackend extends IndependentAbstractBackend implements T
      *
      * @param EnvironmentConfiguration $environmentConfiguration
      * @param array $options Configuration options - depends on the actual backend
+     * @throws CacheException
      */
     public function __construct(EnvironmentConfiguration $environmentConfiguration, array $options)
     {
@@ -82,10 +83,11 @@ class OptimizedRedisCacheBackend extends IndependentAbstractBackend implements T
      * @param array $tags Tags to associate with this cache entry. If the backend does not support tags, this option can be ignored.
      * @param integer $lifetime Lifetime of this cache entry in seconds. If NULL is specified, the default lifetime is used. "0" means unlimited lifetime.
      * @throws \RuntimeException
+     * @throws CacheException
      * @return void
      * @api
      */
-    public function set($entryIdentifier, $data, array $tags = [], $lifetime = null)
+    public function set(string $entryIdentifier, $data, array $tags = [], int $lifetime = null)
     {
         if ($lifetime === null) {
             $lifetime = $this->defaultLifetime;
@@ -124,7 +126,7 @@ class OptimizedRedisCacheBackend extends IndependentAbstractBackend implements T
      * @return mixed The cache entry's content as a string or FALSE if the cache entry could not be loaded
      * @api
      */
-    public function get($entryIdentifier)
+    public function get(string $entryIdentifier)
     {
         return $this->uncompress($this->redis->get($this->buildKey('entry:' . $entryIdentifier)));
     }
@@ -136,7 +138,7 @@ class OptimizedRedisCacheBackend extends IndependentAbstractBackend implements T
      * @return boolean TRUE if such an entry exists, FALSE if not
      * @api
      */
-    public function has($entryIdentifier): bool
+    public function has(string $entryIdentifier): bool
     {
         return $this->redis->exists($this->buildKey('entry:' . $entryIdentifier));
     }
@@ -151,7 +153,7 @@ class OptimizedRedisCacheBackend extends IndependentAbstractBackend implements T
      * @return boolean TRUE if (at least) an entry could be removed or FALSE if no entry was found
      * @api
      */
-    public function remove($entryIdentifier): bool
+    public function remove(string $entryIdentifier): bool
     {
         do {
             $tagsKey = $this->buildKey('tags:' . $entryIdentifier);
