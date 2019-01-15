@@ -11,10 +11,12 @@ namespace Sandstorm\OptimizedRedisCacheBackend\Tests\Functional;
  * source code.
  */
 
+use Neos\Cache\Backend\AbstractBackend;
 use Neos\Cache\Backend\RedisBackend;
 use Neos\Cache\EnvironmentConfiguration;
 use Neos\Cache\Tests\BaseTestCase;
 use Neos\Cache\Frontend\FrontendInterface;
+use PHPUnit\Framework\MockObject\MockObject;
 use Sandstorm\OptimizedRedisCacheBackend\OptimizedRedisCacheBackend;
 
 /**
@@ -31,12 +33,12 @@ use Sandstorm\OptimizedRedisCacheBackend\OptimizedRedisCacheBackend;
 class OptimizedRedisCacheBackendTest extends BaseTestCase
 {
     /**
-     * @var OptimizedRedisCacheBackendTest
+     * @var OptimizedRedisCacheBackend
      */
     private $backend;
 
     /**
-     * @var \PHPUnit_Framework_MockObject_MockObject|FrontendInterface
+     * @var MockObject|FrontendInterface
      */
     private $cache;
 
@@ -48,8 +50,8 @@ class OptimizedRedisCacheBackendTest extends BaseTestCase
     public function setUp()
     {
         $phpredisVersion = phpversion('redis');
-        if (version_compare($phpredisVersion, '1.2.0', '<')) {
-            $this->markTestSkipped(sprintf('phpredis extension version %s is not supported. Please update to verson 1.2.0+.', $phpredisVersion));
+        if (version_compare($phpredisVersion, OptimizedRedisCacheBackend::MIN_REDIS_VERSION, '<')) {
+            $this->markTestSkipped(sprintf('phpredis extension version %s is not supported. Please update to verson %s+.', $phpredisVersion, OptimizedRedisCacheBackend::MIN_REDIS_VERSION));
         }
         try {
             if (!@fsockopen('127.0.0.1', 6379)) {
@@ -192,5 +194,23 @@ class OptimizedRedisCacheBackendTest extends BaseTestCase
             $actualEntries[] = $key;
         }
         $this->assertEmpty($actualEntries, 'Entries should be empty');
+    }
+
+    /**
+     * @test
+     */
+    public function tagsForEntriesWithUnlimitedLifetimeArePersisted()
+    {
+        $this->backend->set('first_entry', 'foo', ['tag1'], AbstractBackend::UNLIMITED_LIFETIME);
+        $this->assertCount(1, $this->backend->findIdentifiersByTag('tag1'));
+    }
+    /**
+     * @test
+     */
+    public function tagsForEntriesWithUnlimitedLifetimeDontDeleteExistingTags()
+    {
+        $this->backend->set('first_entry', 'foo', ['tag1'], 3600);
+        $this->backend->set('second_entry', 'foo', ['tag1'], AbstractBackend::UNLIMITED_LIFETIME);
+        $this->assertCount(2, $this->backend->findIdentifiersByTag('tag1'));
     }
 }
