@@ -11,6 +11,7 @@ namespace Sandstorm\OptimizedRedisCacheBackend\Tests\Functional;
  * source code.
  */
 
+use Neos\Cache\Backend\AbstractBackend;
 use Neos\Cache\Backend\RedisBackend;
 use Neos\Cache\EnvironmentConfiguration;
 use Neos\Cache\Tests\BaseTestCase;
@@ -31,7 +32,7 @@ use Sandstorm\OptimizedRedisCacheBackend\OptimizedRedisCacheBackend;
 class OptimizedRedisCacheBackendTest extends BaseTestCase
 {
     /**
-     * @var OptimizedRedisCacheBackendTest
+     * @var OptimizedRedisCacheBackend
      */
     private $backend;
 
@@ -192,5 +193,24 @@ class OptimizedRedisCacheBackendTest extends BaseTestCase
             $actualEntries[] = $key;
         }
         $this->assertEmpty($actualEntries, 'Entries should be empty');
+    }
+
+    /**
+     * @test
+     */
+    public function tagsForEntriesWithUnlimitedLifetimeArePersisted()
+    {
+        $this->backend->set('first_entry', 'foo', ['tag1'], AbstractBackend::UNLIMITED_LIFETIME);
+        $this->assertCount(1, $this->backend->findIdentifiersByTag('tag1'));
+    }
+
+    /**
+     * @test
+     */
+    public function tagsForEntriesWithUnlimitedLifetimeDontDeleteExistingTags()
+    {
+        $this->backend->set('first_entry', 'foo', ['tag1'], 3600);
+        $this->backend->set('second_entry', 'foo', ['tag1'], AbstractBackend::UNLIMITED_LIFETIME);
+        $this->assertCount(2, $this->backend->findIdentifiersByTag('tag1'));
     }
 }
