@@ -1,24 +1,17 @@
 <?php
 namespace Sandstorm\OptimizedRedisCacheBackend;
 
-/*
- * This file is part of the Neos.Cache package.
- *
- * (c) Contributors of the Neos Project - www.neos.io
- *
- * This package is Open Source Software. For the full copyright and license
- * information, please view the LICENSE file which was distributed with this
- * source code.
- */
-
 use Neos\Cache\Backend\AbstractBackend as IndependentAbstractBackend;
-use Neos\Cache\Backend\RequireOnceFromValueTrait;
-use Neos\Cache\Backend\TaggableBackendInterface;
 use Neos\Cache\Backend\IterableBackendInterface;
 use Neos\Cache\Backend\PhpCapableBackendInterface;
+use Neos\Cache\Backend\RequireOnceFromValueTrait;
+use Neos\Cache\Backend\TaggableBackendInterface;
 use Neos\Cache\EnvironmentConfiguration;
 use Neos\Cache\Exception as CacheException;
 
+/**
+ * An optimized redis backend that performs tag flushes much faster
+ */
 class OptimizedRedisCacheBackend extends IndependentAbstractBackend implements TaggableBackendInterface, IterableBackendInterface, PhpCapableBackendInterface
 {
     use RequireOnceFromValueTrait;
@@ -85,7 +78,7 @@ class OptimizedRedisCacheBackend extends IndependentAbstractBackend implements T
      * @return void
      * @api
      */
-    public function set($entryIdentifier, $data, array $tags = [], $lifetime = null)
+    public function set(string $entryIdentifier, string $data, array $tags = [], int $lifetime = null)
     {
         if ($lifetime === null) {
             $lifetime = $this->defaultLifetime;
@@ -96,7 +89,7 @@ class OptimizedRedisCacheBackend extends IndependentAbstractBackend implements T
             $setOptions['ex'] = $lifetime;
         }
 
-        $redisTags = array_reduce($tags, function($redisTags, $tag) use ($lifetime, $entryIdentifier) {
+        $redisTags = array_reduce($tags, function ($redisTags, $tag) use ($lifetime, $entryIdentifier) {
             $expire = $this->calculateExpires($this->buildKey('tag:' . $tag), $lifetime);
             $redisTags[] = ['key' => $this->buildKey('tag:' . $tag), 'value' => $entryIdentifier, 'expire' => $expire];
 
@@ -128,7 +121,7 @@ class OptimizedRedisCacheBackend extends IndependentAbstractBackend implements T
      * @return mixed The cache entry's content as a string or FALSE if the cache entry could not be loaded
      * @api
      */
-    public function get($entryIdentifier)
+    public function get(string $entryIdentifier)
     {
         return $this->uncompress($this->redis->get($this->buildKey('entry:' . $entryIdentifier)));
     }
@@ -140,7 +133,7 @@ class OptimizedRedisCacheBackend extends IndependentAbstractBackend implements T
      * @return boolean TRUE if such an entry exists, FALSE if not
      * @api
      */
-    public function has($entryIdentifier): bool
+    public function has(string $entryIdentifier): bool
     {
         return $this->redis->exists($this->buildKey('entry:' . $entryIdentifier));
     }
@@ -155,7 +148,7 @@ class OptimizedRedisCacheBackend extends IndependentAbstractBackend implements T
      * @return boolean TRUE if (at least) an entry could be removed or FALSE if no entry was found
      * @api
      */
-    public function remove($entryIdentifier): bool
+    public function remove(string $entryIdentifier): bool
     {
         do {
             $tagsKey = $this->buildKey('tags:' . $entryIdentifier);
@@ -226,11 +219,10 @@ class OptimizedRedisCacheBackend extends IndependentAbstractBackend implements T
     private function calculateExpires($tag, $lifetime)
     {
         $ttl = $this->redis->ttl($tag);
-        if ($ttl === -1 || $lifetime === self::UNLIMITED_LIFETIME) {
-            return 0;
-        } else {
-            return max($ttl, $lifetime);
+        if ($ttl < 0 || $lifetime === self::UNLIMITED_LIFETIME) {
+            return -1;
         }
+        return max($ttl, $lifetime);
     }
 
     /**
@@ -241,7 +233,7 @@ class OptimizedRedisCacheBackend extends IndependentAbstractBackend implements T
      * @return integer The number of entries which have been affected by this flush
      * @api
      */
-    public function flushByTag($tag): int
+    public function flushByTag(string $tag): int
     {
         $script = "
 		local entries = redis.call('SMEMBERS', KEYS[1])
@@ -264,7 +256,7 @@ class OptimizedRedisCacheBackend extends IndependentAbstractBackend implements T
      * @return array An array with identifiers of all matching entries. An empty array if no entries matched
      * @api
      */
-    public function findIdentifiersByTag($tag): array
+    public function findIdentifiersByTag(string $tag): array
     {
         return $this->redis->sMembers($this->buildKey('tag:' . $tag));
     }

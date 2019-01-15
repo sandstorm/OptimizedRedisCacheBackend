@@ -16,6 +16,7 @@ use Neos\Cache\Backend\RedisBackend;
 use Neos\Cache\EnvironmentConfiguration;
 use Neos\Cache\Tests\BaseTestCase;
 use Neos\Cache\Frontend\FrontendInterface;
+use PHPUnit\Framework\MockObject\MockObject;
 use Sandstorm\OptimizedRedisCacheBackend\OptimizedRedisCacheBackend;
 
 /**
@@ -37,7 +38,7 @@ class OptimizedRedisCacheBackendTest extends BaseTestCase
     private $backend;
 
     /**
-     * @var \PHPUnit_Framework_MockObject_MockObject|FrontendInterface
+     * @var MockObject|FrontendInterface
      */
     private $cache;
 
@@ -49,8 +50,8 @@ class OptimizedRedisCacheBackendTest extends BaseTestCase
     public function setUp()
     {
         $phpredisVersion = phpversion('redis');
-        if (version_compare($phpredisVersion, '1.2.0', '<')) {
-            $this->markTestSkipped(sprintf('phpredis extension version %s is not supported. Please update to verson 1.2.0+.', $phpredisVersion));
+        if (version_compare($phpredisVersion, OptimizedRedisCacheBackend::MIN_REDIS_VERSION, '<')) {
+            $this->markTestSkipped(sprintf('phpredis extension version %s is not supported. Please update to verson %s+.', $phpredisVersion, OptimizedRedisCacheBackend::MIN_REDIS_VERSION));
         }
         try {
             if (!@fsockopen('127.0.0.1', 6379)) {
