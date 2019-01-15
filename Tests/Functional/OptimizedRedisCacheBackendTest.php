@@ -204,6 +204,7 @@ class OptimizedRedisCacheBackendTest extends BaseTestCase
         $this->backend->set('first_entry', 'foo', ['tag1'], AbstractBackend::UNLIMITED_LIFETIME);
         $this->assertCount(1, $this->backend->findIdentifiersByTag('tag1'));
     }
+
     /**
      * @test
      */
