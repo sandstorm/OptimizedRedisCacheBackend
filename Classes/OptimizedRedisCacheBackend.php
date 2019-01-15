@@ -219,7 +219,7 @@ class OptimizedRedisCacheBackend extends IndependentAbstractBackend implements T
     private function calculateExpires($tag, $lifetime)
     {
         $ttl = $this->redis->ttl($tag);
-        if ($ttl === -1 || $lifetime === self::UNLIMITED_LIFETIME) {
+        if ($ttl < 0 || $lifetime === self::UNLIMITED_LIFETIME) {
             return -1;
         }
         return max($ttl, $lifetime);
