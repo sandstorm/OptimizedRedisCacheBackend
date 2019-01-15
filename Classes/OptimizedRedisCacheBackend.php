@@ -112,7 +112,11 @@ class OptimizedRedisCacheBackend extends IndependentAbstractBackend implements T
         }
         foreach ($redisTags as $tag) {
             $this->redis->sAdd($tag['key'], $tag['value']);
-            $this->redis->expire($tag['key'], $tag['expire']);
+            if ($tag['expire'] > 0) {
+                $this->redis->expire($tag['key'], $tag['expire']);
+            } else {
+                $this->redis->persist($tag['key']);
+            }
         }
         $this->redis->exec();
     }
