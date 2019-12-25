@@ -49,6 +49,11 @@ class OptimizedRedisCacheBackend extends IndependentAbstractBackend implements T
     protected $database = 0;
 
     /**
+     * @var string
+     */
+    protected $password = '';
+
+    /**
      * @var integer
      */
     protected $compressionLevel = 0;
@@ -78,7 +83,7 @@ class OptimizedRedisCacheBackend extends IndependentAbstractBackend implements T
      * @return void
      * @api
      */
-    public function set(string $entryIdentifier, string $data, array $tags = [], int $lifetime = null)
+    public function set(string $entryIdentifier, string $data, array $tags = [], int $lifetime = null): void
     {
         if ($lifetime === null) {
             $lifetime = $this->defaultLifetime;
@@ -176,7 +181,7 @@ class OptimizedRedisCacheBackend extends IndependentAbstractBackend implements T
      * @return void
      * @api
      */
-    public function flush()
+    public function flush(): void
     {
         // language=lua
         $script = "
@@ -196,7 +201,7 @@ class OptimizedRedisCacheBackend extends IndependentAbstractBackend implements T
      * @return void
      * @api
      */
-    public function collectGarbage()
+    public function collectGarbage(): void
     {
     }
 
@@ -312,7 +317,7 @@ class OptimizedRedisCacheBackend extends IndependentAbstractBackend implements T
      * @return void
      * @api
      */
-    public function setDefaultLifetime(int $lifetime)
+    public function setDefaultLifetime($lifetime): void
     {
         $this->defaultLifetime = $lifetime;
     }
@@ -350,6 +355,14 @@ class OptimizedRedisCacheBackend extends IndependentAbstractBackend implements T
     public function setDatabase(int $database)
     {
         $this->database = $database;
+    }
+
+    /**
+     * @param string $password
+     */
+    public function setPassword(string $password): void
+    {
+        $this->password = $password;
     }
 
     /**
@@ -408,10 +421,28 @@ class OptimizedRedisCacheBackend extends IndependentAbstractBackend implements T
         if (strpos($this->hostname, '/') !== false) {
             $this->port = null;
         }
+
         $redis = new \Redis();
-        if (!$redis->connect($this->hostname, $this->port)) {
-            throw new CacheException('Could not connect to Redis.', 1391972021);
+        try {
+            $connected = false;
+            // keep the assignment above! the connect calls below leaves the variable undefined, if an error occurs.
+            if (strpos($this->hostname, '/') !== false) {
+                $connected = $redis->connect($this->hostname);
+            } else {
+                $connected = $redis->connect($this->hostname, $this->port);
+            }
+        } finally {
+            if ($connected === false) {
+                throw new CacheException('Could not connect to Redis.', 1391972021);
+            }
         }
+
+        if ($this->password !== '') {
+            if (!$redis->auth($this->password)) {
+                throw new CacheException('Redis authentication failed.', 1502366200);
+            }
+        }
+
         $redis->select($this->database);
         return $redis;
     }
