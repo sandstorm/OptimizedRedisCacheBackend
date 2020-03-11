@@ -4,7 +4,7 @@
     "name": "sandstorm/optimizedrediscachebackend",
     "license": "MIT",
     "require": {
-        "neos/flow": "^5.2 || ^6.0"
+        "neos/flow": "^6.0 || dev-master"
     },
     "autoload": {
         "psr-4": {
