@@ -1,7 +1,5 @@
 # Optimized Redis Cache Backend
 
-**WARNING: STILL IN ALPHA; USE AT YOUR OWN RISK**
-
 * for usage as Content Cache
 * needed if the same tags apply to many elements
 
