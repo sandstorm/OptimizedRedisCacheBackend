@@ -338,23 +338,23 @@ class OptimizedRedisCacheBackend extends IndependentAbstractBackend implements T
      *
      * Leave this empty if you want to connect to a socket
      *
-     * @param integer $port Port of the Redis server
+     * @param integer|string $port Port of the Redis server
      * @api
      */
-    public function setPort(int $port)
+    public function setPort($port)
     {
-        $this->port = $port;
+        $this->port = (int)$port;
     }
 
     /**
      * Sets the database that will be used for this backend
      *
-     * @param integer $database Database that will be used
+     * @param integer|string $database Database that will be used
      * @api
      */
-    public function setDatabase(int $database)
+    public function setDatabase($database)
     {
-        $this->database = $database;
+        $this->database = (int)$database;
     }
 
     /**
@@ -366,11 +366,11 @@ class OptimizedRedisCacheBackend extends IndependentAbstractBackend implements T
     }
 
     /**
-     * @param integer $compressionLevel
+     * @param integer|string $compressionLevel
      */
-    public function setCompressionLevel(int $compressionLevel)
+    public function setCompressionLevel($compressionLevel)
     {
-        $this->compressionLevel = $compressionLevel;
+        $this->compressionLevel = (int)$compressionLevel;
     }
 
     /**
