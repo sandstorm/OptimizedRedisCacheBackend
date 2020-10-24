@@ -47,7 +47,7 @@ class OptimizedRedisCacheBackendTest extends BaseTestCase
      *
      * @return void
      */
-    public function setUp()
+    public function setUp(): void
     {
         $phpredisVersion = phpversion('redis');
         if (version_compare($phpredisVersion, OptimizedRedisCacheBackend::MIN_REDIS_VERSION, '<')) {
@@ -74,7 +74,7 @@ class OptimizedRedisCacheBackendTest extends BaseTestCase
      *
      * @return void
      */
-    public function tearDown()
+    public function tearDown(): void
     {
         if ($this->backend instanceof RedisBackend) {
             $this->backend->flush();
