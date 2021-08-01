@@ -9,8 +9,19 @@
 in Caches.yaml, do:
 
 ```yaml
+
 Neos_Fusion_Content:
   backend: Sandstorm\OptimizedRedisCacheBackend\OptimizedRedisCacheBackend
+  
+Neos_Media_ImageSize:
+  backend: Sandstorm\OptimizedRedisCacheBackend\OptimizedRedisCacheBackend
+  
+Flow_Mvc_Routing_Route:
+  backend: Sandstorm\OptimizedRedisCacheBackend\OptimizedRedisCacheBackend
+  
+Flow_Mvc_Routing_Resolve:
+  backend: Sandstorm\OptimizedRedisCacheBackend\OptimizedRedisCacheBackend
+
 ```
 
 ## Problems with the current Redis cache implementation
