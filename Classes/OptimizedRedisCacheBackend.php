@@ -95,16 +95,16 @@ class OptimizedRedisCacheBackend extends IndependentAbstractBackend implements T
         }
 
         $redisTags = array_reduce($tags, function ($redisTags, $tag) use ($lifetime, $entryIdentifier) {
-            $expire = $this->calculateExpires($this->buildKey('tag:' . $tag), $lifetime);
-            $redisTags[] = ['key' => $this->buildKey('tag:' . $tag), 'value' => $entryIdentifier, 'expire' => $expire];
+            $expire = $this->calculateExpires($this->getPrefixedIdentifier('tag:' . $tag), $lifetime);
+            $redisTags[] = ['key' => $this->getPrefixedIdentifier('tag:' . $tag), 'value' => $entryIdentifier, 'expire' => $expire];
 
-            $expire = $this->calculateExpires($this->buildKey('tags:' . $entryIdentifier), $lifetime);
-            $redisTags[] = ['key' => $this->buildKey('tags:' . $entryIdentifier), 'value' => $tag, 'expire' => $expire];
+            $expire = $this->calculateExpires($this->getPrefixedIdentifier('tags:' . $entryIdentifier), $lifetime);
+            $redisTags[] = ['key' => $this->getPrefixedIdentifier('tags:' . $entryIdentifier), 'value' => $tag, 'expire' => $expire];
             return $redisTags;
         }, []);
 
         $this->redis->multi();
-        $result = $this->redis->set($this->buildKey('entry:' . $entryIdentifier), $this->compress($data), $setOptions);
+        $result = $this->redis->set($this->getPrefixedIdentifier('entry:' . $entryIdentifier), $this->compress($data), $setOptions);
         if (!$result instanceof \Redis) {
             $this->verifyRedisVersionIsSupported();
         }
@@ -128,7 +128,7 @@ class OptimizedRedisCacheBackend extends IndependentAbstractBackend implements T
      */
     public function get(string $entryIdentifier)
     {
-        return $this->uncompress($this->redis->get($this->buildKey('entry:' . $entryIdentifier)));
+        return $this->uncompress($this->redis->get($this->getPrefixedIdentifier('entry:' . $entryIdentifier)));
     }
 
     /**
@@ -140,7 +140,7 @@ class OptimizedRedisCacheBackend extends IndependentAbstractBackend implements T
      */
     public function has(string $entryIdentifier): bool
     {
-        return $this->redis->exists($this->buildKey('entry:' . $entryIdentifier));
+        return $this->redis->exists($this->getPrefixedIdentifier('entry:' . $entryIdentifier));
     }
 
     /**
@@ -156,15 +156,15 @@ class OptimizedRedisCacheBackend extends IndependentAbstractBackend implements T
     public function remove(string $entryIdentifier): bool
     {
         do {
-            $tagsKey = $this->buildKey('tags:' . $entryIdentifier);
+            $tagsKey = $this->getPrefixedIdentifier('tags:' . $entryIdentifier);
             $this->redis->watch($tagsKey);
             $tags = $this->redis->sMembers($tagsKey);
             $this->redis->multi();
-            $this->redis->del($this->buildKey('entry:' . $entryIdentifier));
+            $this->redis->del($this->getPrefixedIdentifier('entry:' . $entryIdentifier));
             foreach ($tags as $tag) {
-                $this->redis->sRem($this->buildKey('tag:' . $tag), $entryIdentifier);
+                $this->redis->sRem($this->getPrefixedIdentifier('tag:' . $tag), $entryIdentifier);
             }
-            $this->redis->del($this->buildKey('tags:' . $entryIdentifier));
+            $this->redis->del($this->getPrefixedIdentifier('tags:' . $entryIdentifier));
             $result = $this->redis->exec();
         } while ($result === false);
 
@@ -190,7 +190,7 @@ class OptimizedRedisCacheBackend extends IndependentAbstractBackend implements T
 			redis.call('DEL', key)
 		end
 		";
-        $this->redis->eval($script, [$this->buildKey('')], 0);
+        $this->redis->eval($script, [$this->getPrefixedIdentifier('')], 0);
 
         $this->frozen = null;
     }
@@ -203,15 +203,6 @@ class OptimizedRedisCacheBackend extends IndependentAbstractBackend implements T
      */
     public function collectGarbage(): void
     {
-    }
-
-    /**
-     * @param string $identifier
-     * @return string
-     */
-    private function buildKey(string $identifier): string
-    {
-        return $this->cacheIdentifier . ':' . $identifier;
     }
 
     /**
@@ -249,7 +240,7 @@ class OptimizedRedisCacheBackend extends IndependentAbstractBackend implements T
 		redis.call('DEL', KEYS[1])
 		return #entries
 		";
-        $count = $this->redis->eval($script, [$this->buildKey('tag:' . $tag), $this->buildKey('')], 1);
+        $count = $this->redis->eval($script, [$this->getPrefixedIdentifier('tag:' . $tag), $this->getPrefixedIdentifier('')], 1);
         return $count;
     }
 
@@ -263,7 +254,7 @@ class OptimizedRedisCacheBackend extends IndependentAbstractBackend implements T
      */
     public function findIdentifiersByTag(string $tag): array
     {
-        return $this->redis->sMembers($this->buildKey('tag:' . $tag));
+        return $this->redis->sMembers($this->getPrefixedIdentifier('tag:' . $tag));
     }
 
     /**
@@ -287,7 +278,7 @@ class OptimizedRedisCacheBackend extends IndependentAbstractBackend implements T
      */
     public function key()
     {
-        $entryIdentifier = $this->redis->lIndex($this->buildKey('entries'), $this->entryCursor);
+        $entryIdentifier = $this->redis->lIndex($this->getPrefixedIdentifier('entries'), $this->entryCursor);
         if ($entryIdentifier !== false && !$this->has($entryIdentifier)) {
             return false;
         }

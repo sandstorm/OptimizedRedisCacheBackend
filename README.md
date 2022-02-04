@@ -3,8 +3,26 @@
 * for usage as Content Cache
 * needed if the same tags apply to many elements
 
-## Usage
+## Installation
 
+```bash
+composer require sandstorm/optimizedrediscachebackend
+```
+
+Version compatibility:
+
+- >= 1.1.4: Support for `Neos.Flow.cache.applicationIdentifier` in `Settings.yaml` - this is only supported with the following
+  Flow versions, because we rely on [this core bugfix](https://github.com/neos/flow-development-collection/pull/2622/commits/98af394ae947c59f851ac260449b293ccfe448b0):
+
+  - 6.3.14 or newer (and < 7.0)
+  - 7.0.11 or newer (and < 7.1)
+  - 7.1.5 or newer (and < 7.2)
+  - 7.2.2 or newer
+  - 7.3.0 or newer (and all future versions)
+
+- <= 1.1.3 - Flow 6 and 7 (all versions)
+
+## Usage
 
 in Caches.yaml, do:
 
