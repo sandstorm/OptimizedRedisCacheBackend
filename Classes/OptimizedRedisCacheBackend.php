@@ -59,6 +59,15 @@ class OptimizedRedisCacheBackend extends IndependentAbstractBackend implements T
     protected $compressionLevel = 0;
 
     /**
+     * if TRUE, the redis database is flushed completely using FLUSHDB, and not only the entries of this cache are flushed.
+     *
+     * This is particularly useful to clean up old data when changing applicationIdentifiers are used (see Settings.Cache.yaml in Neos.Flow).
+     *
+     * @var bool
+     */
+    protected $flushRedisDatabaseCompletely = false;
+
+    /**
      * Constructs this backend
      *
      * @param EnvironmentConfiguration $environmentConfiguration
@@ -183,14 +192,18 @@ class OptimizedRedisCacheBackend extends IndependentAbstractBackend implements T
      */
     public function flush(): void
     {
-        // language=lua
-        $script = "
-        local keys = redis.call('KEYS', ARGV[1] .. '*')
-		for k1,key in ipairs(keys) do
-			redis.call('DEL', key)
-		end
-		";
-        $this->redis->eval($script, [$this->getPrefixedIdentifier('')], 0);
+        if ($this->flushRedisDatabaseCompletely === true) {
+            $this->redis->flushDB();
+        } else {
+            // language=lua
+            $script = "
+            local keys = redis.call('KEYS', ARGV[1] .. '*')
+            for k1,key in ipairs(keys) do
+                redis.call('DEL', key)
+            end
+            ";
+            $this->redis->eval($script, [$this->getPrefixedIdentifier('')], 0);
+        }
 
         $this->frozen = null;
     }
@@ -362,6 +375,18 @@ class OptimizedRedisCacheBackend extends IndependentAbstractBackend implements T
     public function setCompressionLevel($compressionLevel)
     {
         $this->compressionLevel = (int)$compressionLevel;
+    }
+
+    /**
+     * if TRUE, the redis database is flushed completely using FLUSHDB, and not only the entries of this cache are flushed.
+     *
+     * This is particularly useful to clean up old data when changing applicationIdentifiers are used (see Settings.Cache.yaml in Neos.Flow).
+     *
+     * @param bool $flushRedisDatabaseCompletely
+     */
+    public function setFlushRedisDatabaseCompletely(bool $flushRedisDatabaseCompletely): void
+    {
+        $this->flushRedisDatabaseCompletely = $flushRedisDatabaseCompletely;
     }
 
     /**

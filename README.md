@@ -42,6 +42,16 @@ Flow_Mvc_Routing_Resolve:
 
 ```
 
+If you are using a symlink-based deployment, you should set the `flushRedisDatabaseCompletely` option as follows to remove
+stale data from previous releases (and ensure you use one redis DB per cache):
+
+```yaml
+Neos_Fusion_Content:
+  backend: Sandstorm\OptimizedRedisCacheBackend\OptimizedRedisCacheBackend
+  backendOptions:
+    flushRedisDatabaseCompletely: true
+```
+
 ## Problems with the current Redis cache implementation
 
 * When doing a flushByTag, we do the following (pseudocode):
