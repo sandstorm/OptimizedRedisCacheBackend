@@ -2,8 +2,13 @@
 
 ## OBSOLETE Since Neos 8.0
 
-NOTE: OptimizedRedisCacheBackend is OBSOLETE for Neos 8.0 and newer, as its functionality has been [integrated into the core](https://github.com/neos/flow-development-collection/pull/2721), and improved further on. Thanks Sebastian Helzle and everybody involved for that :) :)
+NOTE: OptimizedRedisCacheBackend is OBSOLETE for Neos 8.0 and newer, as its functionality has been [integrated into the core](https://github.com/neos/flow-development-collection/pull/2721), and improved further on. Thanks Sebastian Helzle and everybody involved for that :-) :-)
 
+
+-----
+-----
+-----
+-----
 
 ## Original Readme for Neos < 8.0
 
