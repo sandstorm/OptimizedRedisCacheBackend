@@ -4,6 +4,12 @@
 
 NOTE: OptimizedRedisCacheBackend is OBSOLETE for Neos 8.0 and newer, as its functionality has been [integrated into the core](https://github.com/neos/flow-development-collection/pull/2721), and improved further on. Thanks Sebastian Helzle and everybody involved for that :-) :-)
 
+### How to migrate from OptimizedRedisCacheBackend to Neos 8.x
+
+The functionality of `Sandstorm\OptimizedRedisCacheBackend\OptimizedRedisCacheBackend` has been integrated and further improved into the core class `Neos\Cache\Backend\RedisBackend`.
+
+Thus, to update, you need to go to your `Caches.yaml` and replace all occurences of `Sandstorm\OptimizedRedisCacheBackend\OptimizedRedisCacheBackend` with `Neos\Cache\Backend\RedisBackend`.
+
 
 -----
 -----
